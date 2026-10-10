@@ -13,6 +13,7 @@
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Nunito:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;500;700;800&display=swap">
 <script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config = { darkMode: 'class' }</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.5/dist/cdn.min.js"></script>
 
@@ -40,7 +41,7 @@
   .tabbtn.active .ico { background:var(--cream); }
 </style>
 </head>
-<body :class="dark ? 'dark' : ''">
+<body>
 
 <div class="min-h-screen pb-28" x-data="petApp()" x-cloak>
 
@@ -1341,10 +1342,12 @@ const I18N = {
     g7: '皮下水與生理數據：可記錄每次打針份量、注射位置，亦可記錄血糖、血壓與心跳，幫助慢性病照護。',
     g8: '目標體重與開銷：設定目標體重後會在圖表顯示虛線對照；在醫療記錄填寫金額後可在「更多」查看總開銷。',
     g9: '相片會自動壓縮；PDF 每個上限 5MB。文字備份碼不包含相片同檔案。',
+    g10: '開啟推播通知：① iPhone 要 iOS 16.4 或以上，用 Safari 開，㩒「分享」→「加入主畫面」，之後一定要由主畫面嘅圖示開 App（唔係喺 Safari 開）；② 入「更多」→「啟用推播通知」，彈出提示時揀「允許」；③ Android 用 Chrome 開，允許通知即可；④ 如果之前揀咗「不允許」，要去手機設定 → 通知，搵返呢個 App 或瀏覽器重新開啟。注意：呢個係純本機 App，通知只會喺 App 開住或喺背景運行時彈出，完全關閉就收唔到。想穩陣提醒，請同時用「匯出到日曆」。',
     demo_name: '咪咪', demo_med1: 'Revolution 大寵愛', demo_hw: '心絲蟲預防藥', demo_vax: '三合一',
     demo_ev: '今天早上軟便一次，精神正常。', demo_clinic: '暖暖動物醫院', demo_vet: '王醫師',
-    push_title: '瀏覽器推播通知', push_desc: '開啟後，當有藥物或皮下水到期時，手機會發送系統通知（需保持 PWA 或瀏覽器背景執行）。',
+    push_title: '瀏覽器推播通知', push_desc: '開啟後，當有藥物或皮下水到期時，手機會發送系統通知（需保持 PWA 或瀏覽器背景執行）。如未能開啟，請睇使用說明第 10 點。',
     push_on: '🔔 推播通知：已開啟', push_off: '🔕 啟用推播通知', push_denied: '❌ 瀏覽器已封鎖通知權限',
+    push_unsupported: '呢個瀏覽器暫時唔支援通知，請睇使用說明第 10 點', push_ok: '已成功開啟通知',
     dark_mode: '深色模式',
   },
   en: {
@@ -1451,10 +1454,12 @@ const I18N = {
     g7: 'Sub-Q fluids & Vitals: log session amounts and injection sites, or track blood glucose, blood pressure, and heart rate for chronic care.',
     g8: 'Target weight & Expenses: set a target weight to show a dashed line on the chart; add costs to medical records to view total expenses under "More".',
     g9: 'Photos are compressed automatically; PDFs are limited to 5MB each. The text backup code does not include photos or files.',
+    g10: 'Enabling notifications: (1) iPhone needs iOS 16.4+. Open in Safari, tap Share → Add to Home Screen, then always launch the app from the home-screen icon (not from Safari). (2) Go to More → Enable Push Notifications and tap Allow. (3) On Android, open in Chrome and allow notifications. (4) If you previously chose Don\'t Allow, re-enable it in phone Settings → Notifications. Note: this is a local-only app, so notifications only appear while the app is open or running in the background, not after it is fully closed. For reliable reminders, also use "Export to calendar".',
     demo_name: 'Mimi', demo_med1: 'Revolution', demo_hw: 'Heartworm preventive', demo_vax: 'FVRCP',
     demo_ev: 'Soft stool once this morning, otherwise normal.', demo_clinic: 'Sunny Pet Clinic', demo_vet: 'Dr. Wang',
-    push_title: 'Browser Push Notifications', push_desc: 'Receive system notifications when medications or sub-Q fluids are due (requires PWA or browser background running).',
+    push_title: 'Browser Push Notifications', push_desc: 'Receive system notifications when medications or sub-Q fluids are due (requires PWA or browser background running). If it will not enable, see guide item 10.',
     push_on: '🔔 Notifications: Enabled', push_off: '🔕 Enable Push Notifications', push_denied: '❌ Notification permission blocked',
+    push_unsupported: 'Notifications are not supported here. See guide item 10', push_ok: 'Notifications enabled',
     dark_mode: 'Dark Mode',
   },
 };
@@ -1479,7 +1484,7 @@ function petApp() {
     lifeTypes: ['diet', 'behavior', 'mood', 'env', 'other'],
     reportTypes: ['blood', 'xray', 'ultrasound', 'urine', 'other'],
     sites: ['l_shoulder', 'r_shoulder', 'l_flank', 'r_flank', 'other'],
-    guideKeys: ['g1', 'g2', 'g3', 'g4', 'g5', 'g6', 'g7', 'g8', 'g9'],
+    guideKeys: ['g1', 'g2', 'g3', 'g4', 'g5', 'g6', 'g7', 'g8', 'g9', 'g10'],
 
     petModal: false, clinicEdit: false, fluidModal: false, planEdit: false, fluidShowAll: false,
     welcomeModal: false, guideModal: false, skipBox: null, skipReason: '', dmDate: '',
@@ -1488,6 +1493,7 @@ function petApp() {
     lForm: { ...emptyFiles() }, rxForm: { ...emptyFiles() }, rpForm: { ...emptyFiles() },
     fileCache: {}, lightbox: null,
     confirmBox: null, toastMsg: '', toastTimer: null, backupText: '', pushStatus: 'default',
+    notified: new Set(),
 
     t(k, v) {
       let s = (I18N[this.lang] && I18N[this.lang][k]) || I18N.zh[k] || k;
@@ -1501,9 +1507,15 @@ function petApp() {
       this.applyLang();
       setTimeout(() => this.drawChart(), 50);
     },
+    applyDark() {
+      document.documentElement.classList.toggle('dark', this.dark);
+      const m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.content = this.dark ? '#1c1917' : '#faf9f5';
+    },
     toggleDark() {
       this.dark = !this.dark;
       try { localStorage.setItem(DARK_KEY, this.dark ? '1' : '0'); } catch (e) {}
+      this.applyDark();
     },
     applyLang() {
       document.documentElement.lang = this.lang === 'zh' ? 'zh-Hant' : 'en';
@@ -1526,29 +1538,42 @@ function petApp() {
     fmtW(kg) { return this.fromKg(kg) + ' ' + this.unit; },
 
     get pushBtnText() {
+      if (!('Notification' in window)) return this.t('push_unsupported');
       if (this.pushStatus === 'granted') return this.t('push_on');
       if (this.pushStatus === 'denied') return this.t('push_denied');
       return this.t('push_off');
     },
+    async notify(title, body) {
+      try {
+        if ('serviceWorker' in navigator) {
+          const reg = await navigator.serviceWorker.getRegistration();
+          if (reg) { await reg.showNotification(title, { body }); return true; }
+        }
+        new Notification(title, { body });
+        return true;
+      } catch (e) { return false; }
+    },
     async requestPushPermission() {
-      if (!('Notification' in window)) return this.say('Browser does not support notifications');
+      if (!('Notification' in window)) {
+        this.say(this.t('push_unsupported'));
+        this.guideModal = true;
+        return;
+      }
       const perm = await Notification.requestPermission();
       this.pushStatus = perm;
       if (perm === 'granted') {
-        new Notification(this.t('app_title'), { body: 'Push notifications enabled successfully!' });
-        this.say('Notifications enabled');
-      } else {
-        this.say('Permission denied');
-      }
+        await this.notify(this.t('app_title'), this.t('push_ok'));
+        this.say(this.t('push_ok'));
+      } else this.say(this.t('push_denied'));
     },
     checkPushTrigger() {
       if (!('Notification' in window) || Notification.permission !== 'granted') return;
-      const nowHM = this.nowHM();
-      for (const g of this.todayGroups) {
-        for (const it of g.items) {
-          if (it.time === nowHM && it.status === 'due') {
-            new Notification(g.petName + ' - ' + it.title, { body: 'Time: ' + it.time + (it.sub ? ' (' + it.sub + ')' : '') });
-          }
+      const hm = this.nowHM();
+      for (const g of this.todayGroups) for (const it of g.items) {
+        const k = it.key + '|' + hm;
+        if (it.time === hm && it.status === 'due' && !this.notified.has(k)) {
+          this.notified.add(k);
+          this.notify(g.petName + ' - ' + it.title, hm + (it.sub ? ' (' + it.sub + ')' : ''));
         }
       }
     },
@@ -1733,6 +1758,7 @@ function petApp() {
       this.lang = (l === 'zh' || l === 'en') ? l : (hadData ? 'zh' : ((navigator.language || '').toLowerCase().startsWith('zh') ? 'zh' : 'en'));
       this.unit = ['kg', 'lb', 'g'].includes(u) ? u : 'kg';
       this.dark = dk === '1';
+      this.applyDark();
       this.applyLang();
       if ('Notification' in window) this.pushStatus = Notification.permission;
 
